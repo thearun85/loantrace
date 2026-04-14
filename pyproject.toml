@@ -1,0 +1,49 @@
+[project]
+name = "loantrace"
+version = "0.1.0"
+description = "Stateless loan schedule engine for Python. Amortised and simple schedules, event-driven recalculation, full calculation trace."
+authors = [
+    {name = "Arun Raghunath"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.15.10,<0.16.0)",
+    "mypy (>=1.20.1,<2.0.0)",
+    "pytest (>=9.0.3,<10.0.0)"
+]
+
+[project.urls]
+homepage = "https://loantrace.io"
+repository = "https://github.com/thearun85/loantrace"
+
+[tool.poetry]
+packages = [{ include = "loantrace" }]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM", "TCH", "ANN", "RUF"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
