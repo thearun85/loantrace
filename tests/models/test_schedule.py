@@ -83,7 +83,7 @@ class TestScheduleHappyPath:
     def test_construction(self) -> None:
         row = make_schedule()
         assert row.seq_no == 1
-        assert row.component == ComponentType.CAPITAL
+        assert row.component is ComponentType.CAPITAL
         assert row.start_date == date(2026, 1, 1)
         assert row.due_date == date(2026, 2, 1)
         assert row.amount_due == Decimal("1000.00")
@@ -92,7 +92,7 @@ class TestScheduleHappyPath:
     def test_interest_row_with_calc(self) -> None:
         calc = make_comp_calc()
         row = make_schedule(component=ComponentType.INTEREST, calc=(calc,))
-        assert row.component == ComponentType.INTEREST
+        assert row.component is ComponentType.INTEREST
         assert row.calc is not None
         assert len(row.calc) == 1
         assert row.calc[0] is calc

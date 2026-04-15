@@ -55,16 +55,16 @@ class TestLoanRequestHappyPath:
         assert loan.interest_rate == Decimal("0.0525")
         assert loan.tenor_months == 300
         assert loan.value_date == date(2026, 1, 1)
-        assert loan.payment_cycle == FrequencyCode.MONTHLY
-        assert loan.schedule_type == ScheduleType.AMORTISED_REDUCING
-        assert loan.repayment_type == RepaymentType.CAPITAL_AND_INTEREST
+        assert loan.payment_cycle is FrequencyCode.MONTHLY
+        assert loan.schedule_type is ScheduleType.AMORTISED_REDUCING
+        assert loan.repayment_type is RepaymentType.CAPITAL_AND_INTEREST
 
     def test_defaults(self) -> None:
         loan = make()
-        assert loan.rate_type == RateType.FIXED
+        assert loan.rate_type is RateType.FIXED
         assert loan.installment_start_date is None
-        assert loan.days_in_year == DaysInYear.ACTUAL
-        assert loan.days_in_month == DaysInMonth.ACTUAL
+        assert loan.days_in_year is DaysInYear.ACTUAL
+        assert loan.days_in_month is DaysInMonth.ACTUAL
 
     def test_installment_start_date_supplied(self) -> None:
         loan = make(installment_start_date=date(2026, 4, 20))
@@ -72,7 +72,7 @@ class TestLoanRequestHappyPath:
 
     def test_repayment_type_interest_only(self) -> None:
         loan = make(repayment_type=RepaymentType.INTEREST_ONLY)
-        assert loan.repayment_type == RepaymentType.INTEREST_ONLY
+        assert loan.repayment_type is RepaymentType.INTEREST_ONLY
 
 
 class TestLoanRequestImmutability:
@@ -85,59 +85,59 @@ class TestLoanRequestImmutability:
 class TestLoanRequestEnum:
     def test_payment_cycle_monthly(self) -> None:
         loan = make(payment_cycle=FrequencyCode.MONTHLY)
-        assert loan.payment_cycle == FrequencyCode.MONTHLY
+        assert loan.payment_cycle is FrequencyCode.MONTHLY
 
     def test_payment_cycle_quarterly(self) -> None:
         loan = make(payment_cycle=FrequencyCode.QUARTERLY)
-        assert loan.payment_cycle == FrequencyCode.QUARTERLY
+        assert loan.payment_cycle is FrequencyCode.QUARTERLY
 
     def test_schedule_type_amortised_reducing(self) -> None:
         loan = make(schedule_type=ScheduleType.AMORTISED_REDUCING)
-        assert loan.schedule_type == ScheduleType.AMORTISED_REDUCING
+        assert loan.schedule_type is ScheduleType.AMORTISED_REDUCING
 
     def test_schedule_type_simple(self) -> None:
         loan = make(schedule_type=ScheduleType.SIMPLE)
-        assert loan.schedule_type == ScheduleType.SIMPLE
+        assert loan.schedule_type is ScheduleType.SIMPLE
 
     def test_repayment_type_capital_and_interest(self) -> None:
         loan = make(repayment_type=RepaymentType.CAPITAL_AND_INTEREST)
-        assert loan.repayment_type == RepaymentType.CAPITAL_AND_INTEREST
+        assert loan.repayment_type is RepaymentType.CAPITAL_AND_INTEREST
 
     def test_repayment_type_interest_only(self) -> None:
         loan = make(repayment_type=RepaymentType.INTEREST_ONLY)
-        assert loan.repayment_type == RepaymentType.INTEREST_ONLY
+        assert loan.repayment_type is RepaymentType.INTEREST_ONLY
 
     def test_rate_type_fixed(self) -> None:
         loan = make(rate_type=RateType.FIXED)
-        assert loan.rate_type == RateType.FIXED
+        assert loan.rate_type is RateType.FIXED
 
     def test_rate_type_variable(self) -> None:
         loan = make(rate_type=RateType.VARIABLE)
-        assert loan.rate_type == RateType.VARIABLE
+        assert loan.rate_type is RateType.VARIABLE
 
     def test_days_in_year_365(self) -> None:
         loan = make(days_in_year=DaysInYear.DAYS_365)
-        assert loan.days_in_year == DaysInYear.DAYS_365
+        assert loan.days_in_year is DaysInYear.DAYS_365
 
     def test_days_in_year_360(self) -> None:
         loan = make(days_in_year=DaysInYear.DAYS_360)
-        assert loan.days_in_year == DaysInYear.DAYS_360
+        assert loan.days_in_year is DaysInYear.DAYS_360
 
     def test_days_in_year_actual(self) -> None:
         loan = make(days_in_year=DaysInYear.ACTUAL)
-        assert loan.days_in_year == DaysInYear.ACTUAL
+        assert loan.days_in_year is DaysInYear.ACTUAL
 
     def test_days_in_month_euro_30(self) -> None:
         loan = make(days_in_month=DaysInMonth.EURO_30)
-        assert loan.days_in_month == DaysInMonth.EURO_30
+        assert loan.days_in_month is DaysInMonth.EURO_30
 
     def test_days_in_month_us_30(self) -> None:
         loan = make(days_in_month=DaysInMonth.US_30)
-        assert loan.days_in_month == DaysInMonth.US_30
+        assert loan.days_in_month is DaysInMonth.US_30
 
     def test_days_in_month_actual(self) -> None:
         loan = make(days_in_month=DaysInMonth.ACTUAL)
-        assert loan.days_in_month == DaysInMonth.ACTUAL
+        assert loan.days_in_month is DaysInMonth.ACTUAL
 
 
 # -------------------------------------------------------------------------
@@ -163,7 +163,7 @@ class TestLoanSummaryHappyPath:
         )
         summary = LoanSummary(loan_request=loan, schedules=(schedule,))
         assert len(summary.schedules) == 1
-        assert summary.schedules[0].component == ComponentType.CAPITAL
+        assert summary.schedules[0].component is ComponentType.CAPITAL
 
 
 class TestLoanSummaryImmutability:
