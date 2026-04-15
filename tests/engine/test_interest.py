@@ -1,11 +1,11 @@
-"""Tests for loantrace.engine.interest._resolve_days_in_period."""
+"""Tests for loantrace.engine.interest."""
 
 from __future__ import annotations
 
 from datetime import date
 
-from loantrace.engine.interest import _resolve_days_in_period
-from loantrace.models.loan import DaysInMonth
+from loantrace.engine.interest import _resolve_days_in_period, _resolve_days_in_year
+from loantrace.models.loan import DaysInMonth, DaysInYear
 
 
 class TestResolveDaysInPeriodActual:
@@ -142,3 +142,32 @@ class TestResolveDaysInPeriodUS30:
             )
             == 60
         )
+
+
+class TestResolveDaysInYear:
+    def test_days_365(self) -> None:
+        # Fixed — year and leap status are irrelevant
+        assert _resolve_days_in_year(date(2026, 1, 1), DaysInYear.DAYS_365) == 365
+
+    def test_days_360(self) -> None:
+        assert _resolve_days_in_year(date(2026, 1, 1), DaysInYear.DAYS_360) == 360
+
+    def test_actual_non_leap(self) -> None:
+        # 2026 is not a leap year
+        assert _resolve_days_in_year(date(2026, 6, 1), DaysInYear.ACTUAL) == 365
+
+    def test_actual_leap(self) -> None:
+        # 2028 is a leap year
+        assert _resolve_days_in_year(date(2028, 6, 1), DaysInYear.ACTUAL) == 366
+
+    def test_actual_uses_start_date_year(self) -> None:
+        # Period spans year boundary — 2027 is not a leap year, so 365
+        assert _resolve_days_in_year(date(2027, 12, 1), DaysInYear.ACTUAL) == 365
+
+    def test_actual_century_non_leap(self) -> None:
+        # 1900 is divisible by 100 but not 400 — not a leap year
+        assert _resolve_days_in_year(date(1900, 1, 1), DaysInYear.ACTUAL) == 365
+
+    def test_actual_400_year_leap(self) -> None:
+        # 2000 is divisible by 400 — is a leap year
+        assert _resolve_days_in_year(date(2000, 1, 1), DaysInYear.ACTUAL) == 366

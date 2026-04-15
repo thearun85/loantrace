@@ -1,6 +1,6 @@
 from datetime import date
 
-from loantrace.models.loan import DaysInMonth
+from loantrace.models.loan import DaysInMonth, DaysInYear
 
 
 def _resolve_days_in_period(
@@ -48,3 +48,36 @@ def _resolve_days_in_period(
 
     # Shared formula for both 30-day conventions.
     return 360 * (y2 - y1) + 30 * (m2 - m1) + (d2 - d1)
+
+
+def _resolve_days_in_year(
+    start_date: date,
+    convention: DaysInYear,
+) -> int:
+    """Return the number of days in the year for the given convention.
+
+    This is the denominator in the interest formula:
+        interest = principal * rate * days_in_period / days_in_year
+
+    Args:
+        start_date: First day of the accrual period. Used to determine
+            the reference year under the ACTUAL convention.
+        convention: Day-count denominator convention from the loan request.
+
+    Returns:
+        Integer day count to use as the year denominator.
+    """
+    if convention is DaysInYear.DAYS_365:
+        return 365
+
+    if convention is DaysInYear.DAYS_360:
+        return 360
+
+    # ACTUAL: 366 for leap years, 365 otherwise.
+    # Reference year is the start date's year — market standard.
+    return 366 if _is_leap_year(start_date.year) else 365
+
+
+def _is_leap_year(year: int) -> bool:
+    """Return True if the given year is a leap year."""
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
