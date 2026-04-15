@@ -14,9 +14,14 @@ from loantrace.models.loan import (
     DaysInYear,
     FrequencyCode,
     LoanRequest,
+    LoanSummary,
     RateType,
     RepaymentType,
     ScheduleType,
+)
+from loantrace.models.schedule import (
+    ComponentType,
+    Schedule,
 )
 
 # -------------------------------------------------------------------------
@@ -133,3 +138,37 @@ class TestLoanRequestEnum:
     def test_days_in_month_actual(self) -> None:
         loan = make(days_in_month=DaysInMonth.ACTUAL)
         assert loan.days_in_month == DaysInMonth.ACTUAL
+
+
+# -------------------------------------------------------------------------
+# LoanSummary
+# -------------------------------------------------------------------------
+
+
+class TestLoanSummaryHappyPath:
+    def test_construction(self) -> None:
+        loan = make()
+        summary = LoanSummary(loan_request=loan, schedules=())
+        assert summary.loan_request is loan
+        assert summary.schedules == ()
+
+    def test_with_schedules(self) -> None:
+        loan = make()
+        schedule = Schedule(
+            seq_no=1,
+            component=ComponentType.CAPITAL,
+            start_date=date(2026, 1, 1),
+            due_date=date(2026, 2, 1),
+            amount_due=Decimal("1000.00"),
+        )
+        summary = LoanSummary(loan_request=loan, schedules=(schedule,))
+        assert len(summary.schedules) == 1
+        assert summary.schedules[0].component == ComponentType.CAPITAL
+
+
+class TestLoanSummaryImmutability:
+    def test_frozen(self) -> None:
+        loan = make()
+        summary = LoanSummary(loan_request=loan, schedules=())
+        with pytest.raises(FrozenInstanceError):
+            summary.loan_request.loan_amount = Decimal("500000.00")  # type: ignore[misc]
