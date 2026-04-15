@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
-from loantrace.engine.interest import _resolve_days_in_period, _resolve_days_in_year
+from loantrace.engine.interest import (
+    _calculate,
+    _resolve_days_in_period,
+    _resolve_days_in_year,
+)
 from loantrace.models.loan import DaysInMonth, DaysInYear
 
 
@@ -171,3 +176,70 @@ class TestResolveDaysInYear:
     def test_actual_400_year_leap(self) -> None:
         # 2000 is divisible by 400 — is a leap year
         assert _resolve_days_in_year(date(2000, 1, 1), DaysInYear.ACTUAL) == 366
+
+
+class TestCalculate:
+    def test_basic_interest(self) -> None:
+        # 250000 * 0.0525 * 31 / 365 = 1114.726...  → 1114.73
+        calc = _calculate(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_period=31,
+            days_in_year=365,
+        )
+        assert calc.interest_rounded == Decimal("1114.73")
+
+    def test_gross_is_unrounded(self) -> None:
+        calc = _calculate(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_period=31,
+            days_in_year=365,
+        )
+        assert calc.interest_gross != calc.interest_rounded
+
+    def test_delta_is_rounded_minus_gross(self) -> None:
+        calc = _calculate(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_period=31,
+            days_in_year=365,
+        )
+        assert calc.interest_delta == calc.interest_rounded - calc.interest_gross
+
+    def test_fields_populated(self) -> None:
+        calc = _calculate(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_period=31,
+            days_in_year=365,
+        )
+        assert calc.start_date == date(2026, 1, 1)
+        assert calc.end_date == date(2026, 2, 1)
+        assert calc.principal_expected == Decimal("250000.00")
+        assert calc.interest_rate == Decimal("0.0525")
+        assert calc.days_in_period == 31
+        assert calc.days_in_year == 365
+
+    def test_round_half_up(self) -> None:
+        # Construct a case where ROUND_HALF_EVEN and ROUND_HALF_UP differ.
+        # 1.125 → ROUND_HALF_UP = 1.13, ROUND_HALF_EVEN = 1.12
+        # principal * rate * days / year = 1.125 exactly
+        # 10000 * 0.045 * 1 / 400 = 1.125
+        calc = _calculate(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 1, 2),
+            principal=Decimal("10000"),
+            annual_rate=Decimal("0.045"),
+            days_in_period=1,
+            days_in_year=400,
+        )
+        assert calc.interest_rounded == Decimal("1.13")

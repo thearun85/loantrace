@@ -1,6 +1,8 @@
 from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 
 from loantrace.models.loan import DaysInMonth, DaysInYear
+from loantrace.models.schedule import CompCalc
 
 
 def _resolve_days_in_period(
@@ -81,3 +83,41 @@ def _resolve_days_in_year(
 def _is_leap_year(year: int) -> bool:
     """Return True if the given year is a leap year."""
     return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+
+def _calculate(
+    start_date: date,
+    end_date: date,
+    principal: Decimal,
+    annual_rate: Decimal,
+    days_in_period: int,
+    days_in_year: int,
+) -> CompCalc:
+    """Compute interest for a single accrual period.
+
+    Args:
+        start_date: First day of the accrual period (inclusive).
+        end_date: Last day of the accrual period (exclusive upper bound).
+        principal: Outstanding principal at the start of the period.
+        annual_rate: Annual interest rate as a decimal fraction.
+        days_in_period: Resolved day count numerator.
+        days_in_year: Resolved day count denominator.
+
+    Returns:
+        CompCalc carrying the full calculation trace for this period.
+    """
+    interest_gross = principal * annual_rate * days_in_period / days_in_year
+    interest_rounded = interest_gross.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    interest_delta = interest_rounded - interest_gross
+
+    return CompCalc(
+        start_date=start_date,
+        end_date=end_date,
+        principal_expected=principal,
+        interest_rate=annual_rate,
+        days_in_year=days_in_year,
+        days_in_period=days_in_period,
+        interest_gross=interest_gross,
+        interest_rounded=interest_rounded,
+        interest_delta=interest_delta,
+    )
