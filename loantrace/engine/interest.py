@@ -121,3 +121,38 @@ def _calculate(
         interest_rounded=interest_rounded,
         interest_delta=interest_delta,
     )
+
+
+def process_accrual(
+    start_date: date,
+    end_date: date,
+    principal: Decimal,
+    annual_rate: Decimal,
+    days_in_month: DaysInMonth,
+    days_in_year: DaysInYear,
+) -> tuple[CompCalc, ...]:
+    """Compute the accrual breakdown for a single schedule period.
+
+    In Phase 1 there is always one rate and therefore one accrual
+    sub-period per schedule period. Returns a tuple for consistency
+    with the Schedule.calc field which expects tuple[CompCalc, ...].
+
+    Args:
+        start_date: First day of the period (inclusive).
+        end_date: Last day of the period (exclusive upper bound).
+        principal: Outstanding principal at the start of the period.
+        annual_rate: Annual interest rate as a decimal fraction.
+        days_in_month: Day-count numerator convention.
+        days_in_year: Day-count denominator convention.
+
+    Returns:
+        Tuple containing one CompCalc for this period.
+    """
+    days_period = _resolve_days_in_period(start_date, end_date, days_in_month)
+    days_year = _resolve_days_in_year(start_date, days_in_year)
+
+    return (
+        _calculate(
+            start_date, end_date, principal, annual_rate, days_period, days_year
+        ),
+    )

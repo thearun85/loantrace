@@ -9,6 +9,7 @@ from loantrace.engine.interest import (
     _calculate,
     _resolve_days_in_period,
     _resolve_days_in_year,
+    process_accrual,
 )
 from loantrace.models.loan import DaysInMonth, DaysInYear
 
@@ -243,3 +244,76 @@ class TestCalculate:
             days_in_year=400,
         )
         assert calc.interest_rounded == Decimal("1.13")
+
+
+class TestProcessAccrual:
+    def test_returns_tuple(self) -> None:
+        result = process_accrual(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_month=DaysInMonth.ACTUAL,
+            days_in_year=DaysInYear.ACTUAL,
+        )
+        assert isinstance(result, tuple)
+
+    def test_phase_1_single_comp_calc(self) -> None:
+        result = process_accrual(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_month=DaysInMonth.ACTUAL,
+            days_in_year=DaysInYear.ACTUAL,
+        )
+        assert len(result) == 1
+
+    def test_correct_interest(self) -> None:
+        # 250000 * 0.0525 * 31 / 365 = 1114.726... → 1114.73
+        result = process_accrual(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_month=DaysInMonth.ACTUAL,
+            days_in_year=DaysInYear.ACTUAL,
+        )
+        assert result[0].interest_rounded == Decimal("1114.73")
+
+    def test_days_resolved_correctly(self) -> None:
+        result = process_accrual(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_month=DaysInMonth.ACTUAL,
+            days_in_year=DaysInYear.ACTUAL,
+        )
+        assert result[0].days_in_period == 31
+        assert result[0].days_in_year == 365
+
+    def test_euro_30_convention(self) -> None:
+        # Jan period — EURO_30 gives 30 days not 31
+        result = process_accrual(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_month=DaysInMonth.EURO_30,
+            days_in_year=DaysInYear.DAYS_360,
+        )
+        assert result[0].days_in_period == 30
+        assert result[0].days_in_year == 360
+
+    def test_comp_calc_dates_match_period(self) -> None:
+        result = process_accrual(
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 2, 1),
+            principal=Decimal("250000.00"),
+            annual_rate=Decimal("0.0525"),
+            days_in_month=DaysInMonth.ACTUAL,
+            days_in_year=DaysInYear.ACTUAL,
+        )
+        assert result[0].start_date == date(2026, 1, 1)
+        assert result[0].end_date == date(2026, 2, 1)
